@@ -156,10 +156,11 @@ bool InsertPTEntry(PD* pdp, unsigned int pdEntryIdx, unsigned int ptEntryIdx, PT
 
 int main(int argc, const char** argv)
 {
+	//Places a uint32 at beginning of heap memory, so we know how much memory is avaliable to be "mapped".
 	SetMaximumPhysicalMemory(((256 * 1024) * 1024) - 4);
 
 	//Page directory pointer... (this will be in CR3 register (PDBR) on x86 CPUs).
-	PD* pdp = reinterpret_cast<PD*>(pHeapMemory);
+	PD* pdp = reinterpret_cast<PD*>(pHeapMemory); // pHeapMemory - This is our fake physical memory to map out.
 	pdp = reinterpret_cast<PD*>(((unsigned int*)pdp + 1));
 
 	//If the memory address held in the page directory pointer (pdp)
