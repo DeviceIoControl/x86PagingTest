@@ -214,7 +214,7 @@ int main(int argc, const char** argv)
 	pte.Global = 0;
 	pte.PageBaseAddr = ((unsigned int)KePhysAddrSpace.Base) >> 12;
 
-	//Unit Test: Maps out all pages for physical memory...
+	//Unit Test: Maps out all pages for 64 page tables. 
 	for(int y = 1; y <= 64; ++y)
 	{
 		pde.PageTableBaseAddr = ((unsigned int)&pdp[y].entries[0] >> 12);
