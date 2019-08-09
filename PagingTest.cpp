@@ -167,19 +167,21 @@ int main(int argc, const char** argv)
 	//is not PAGE (4KB) aligned, then we align the address manually.
 	if(((int)pdp) % PAGE != 0)
 	{
-		pdp = reinterpret_cast<PD*>(((int)pdp >> 12) << 12);
-		pdp = reinterpret_cast<PD*>((int)pdp + 0x1000);
+		pdp = reinterpret_cast<PD*>(static_cast<int>((pdp >> 12) << 12));
+		pdp = reinterpret_cast<PD*>(static_cast<int>(pdp + 0x1000));
 	}
 
-	unsigned int maxPhysAddrSpace =  *(unsigned int*)pHeapMemory;
+	unsigned int maxPhysAddrSpace =  *reinterpret_cast<unsigned int*>(pHeapMemory);
 	std::cout << "Base Address: " << (void*)pHeapMemory << "\n";
 
 	//Create a reversed stack for tracking Kernel physical memory allocation.
 	//This allows for the kernel memory space to grow without corrupting any critical data structures...
 	Stack<byte> KePhysAddrSpace = { 0 };
-	KePhysAddrSpace.Base = (byte*)(&pdp[64 + 1]); //Adjust kernel's memory allocation stack base pointer for page mapping structures (Page Tables & Directory)...
-	//Adjusted for 1 page directory and 64 page tables.
-	//Usable address space = (Max Physical Address Space - (sizeof(Page Directory) + sizeof(Page Table))).
+	
+	//Kernel's memory allocation stack base pointer adjusted for 1 page directory and 64 page tables.
+	KePhysAddrSpace.Base = reinterpret_cast<byte*>(&pdp[64 + 1]); 
+	
+	//Usable address space = (Max Physical Address Space - (sizeof(Page Directory) + (sizeof(Page Table) * NumOfPTs))).
 	KePhysAddrSpace.Top = KePhysAddrSpace.Base;
 
 	//Page directory entry...
@@ -193,7 +195,7 @@ int main(int argc, const char** argv)
 	pde.PageSizeExt = 0;
 
 	//Keep only 20 most significant bits...
-	pde.PageTableBaseAddr = ((unsigned int)&pdp[1].entries[0]) >> 12;
+	pde.PageTableBaseAddr = (static_cast<unsigned int>(&pdp[1].entries[0])) >> 12;
 
 	//&pdp[0] = Page Directory address.
 	//&pdp[1+] = Page Table address. (We can do this because,
@@ -213,12 +215,12 @@ int main(int argc, const char** argv)
 	pte.Dirty = 0;
 	pte.PAT = 0;
 	pte.Global = 0;
-	pte.PageBaseAddr = ((unsigned int)KePhysAddrSpace.Base) >> 12;
+	pte.PageBaseAddr = (static_cast<unsigned int>(KePhysAddrSpace.Base)) >> 12;
 
 	//Unit Test: Maps out all pages for 64 page tables. 
 	for(int y = 1; y <= 64; ++y)
 	{
-		pde.PageTableBaseAddr = ((unsigned int)&pdp[y].entries[0] >> 12);
+		pde.PageTableBaseAddr = (static_cast<unsigned int>(&pdp[y].entries[0]) >> 12);
 		InsertPDEntry(pdp, y, pde);
 
 		for(int i = 0; i < 1024; ++i)
