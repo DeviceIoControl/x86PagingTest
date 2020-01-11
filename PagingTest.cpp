@@ -93,12 +93,6 @@ struct PD
 
 struct PTE
 {
-	bool Present()
-	{
-		uint32_t a = 0x12345679;
-		return (bool)(a & 1);
-	}
-
 	unsigned int Present : 1;
 	unsigned int ReadWrite : 1;
 	unsigned int KeUsrMode : 1;
@@ -165,10 +159,8 @@ int main(int argc, const char** argv)
 
 	//If the memory address held in the page directory pointer (pdp)
 	//is not PAGE (4KB) aligned, then we align the address manually.
-	if(((int)pdp) % PAGE != 0)
-	{
-		pdp = reinterpret_cast<PD*>(static_cast<int>((pdp >> 12) << 12));
-		pdp = reinterpret_cast<PD*>(static_cast<int>(pdp + 0x1000));
+	if(((int)pdp) % PAGE != 0) {
+		pdp = reinterpret_cast<PD*>(static_cast<int>(pdp) & (0xFFFFF << 12));
 	}
 
 	unsigned int maxPhysAddrSpace =  *reinterpret_cast<unsigned int*>(pHeapMemory);
@@ -218,8 +210,7 @@ int main(int argc, const char** argv)
 	pte.PageBaseAddr = (static_cast<unsigned int>(KePhysAddrSpace.Base)) >> 12;
 
 	//Unit Test: Maps out all pages for 64 page tables. 
-	for(int y = 1; y <= 64; ++y)
-	{
+	for(int y = 1; y <= 64; ++y) {
 		pde.PageTableBaseAddr = (static_cast<unsigned int>(&pdp[y].entries[0]) >> 12);
 		InsertPDEntry(pdp, y, pde);
 
