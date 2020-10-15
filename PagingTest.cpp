@@ -160,7 +160,7 @@ int main(int argc, const char** argv)
 	//If the memory address held in the page directory pointer (pdp)
 	//is not PAGE (4KB) aligned, then we align the address manually.
 	if(((int)pdp) % PAGE != 0) {
-		pdp = reinterpret_cast<PD*>(static_cast<int>(pdp) & (0xFFFFF << 12));
+		pdp = reinterpret_cast<PD*>(static_cast<int>(pdp) & (~0xFFF));
 	}
 
 	unsigned int maxPhysAddrSpace =  *reinterpret_cast<unsigned int*>(pHeapMemory);
